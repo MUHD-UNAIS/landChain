@@ -18,6 +18,7 @@ app.get("/api/blockchain", (req, res) => {
 });
 
 app.post("/api/register-land", (req, res) => {
+
     const {
         landId,
         ownerName,
@@ -26,17 +27,21 @@ app.post("/api/register-land", (req, res) => {
         area
     } = req.body;
 
-    if (
-        !landId ||
-        !ownerName ||
-        !surveyNumber ||
-        !location ||
-        !area
-    ) {
+
+    // Check whether land already exists
+    const landExists = landBlockchain.chain.some(
+        (block) =>
+            block.data.landId === landId &&
+            block.data.transactionType === "LAND_REGISTRATION"
+    );
+
+
+    if (landExists) {
         return res.status(400).json({
-            message: "All fields are required"
+            message: "Land is already registered"
         });
     }
+
 
     const landData = {
         transactionType: "LAND_REGISTRATION",
@@ -47,14 +52,16 @@ app.post("/api/register-land", (req, res) => {
         area
     };
 
+
     landBlockchain.addBlock(landData);
+
 
     res.json({
         message: "Land registered successfully",
         block: landBlockchain.getLatestBlock()
     });
-});
 
+});
 app.post("/api/transfer-land", (req, res) => {
     const {
         landId,
